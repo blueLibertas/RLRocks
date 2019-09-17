@@ -704,6 +704,10 @@ set(SOURCES
         utilities/ttl/db_ttl_impl.cc
         utilities/write_batch_with_index/write_batch_with_index.cc
         utilities/write_batch_with_index/write_batch_with_index_internal.cc
+        db/policy_rl/dqn.cc
+        db/policy_rl/ExperienceReplay.cc
+        db/policy_rl/PrioritizedExperienceReplay.cc
+        db/policy_rl/Trainer.cc
         $<TARGET_OBJECTS:build_version>)
 
 if(HAVE_SSE42 AND NOT MSVC)
@@ -769,16 +773,20 @@ if(WITH_LIBRADOS)
   list(APPEND THIRDPARTY_LIBS rados)
 endif()
 
+include_directories(${PROJECT_SOURCE_DIR}/db/policy_rl)
+set(Torch_DIR /home/wonki/libtorch/share/cmake/Torch)
+find_package(Torch REQUIRED)
+
 if(WIN32)
   set(SYSTEM_LIBS ${SYSTEM_LIBS} Shlwapi.lib Rpcrt4.lib)
   set(LIBS ${ROCKSDB_STATIC_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
 else()
   set(SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
-  set(LIBS ${ROCKSDB_SHARED_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  set(LIBS ${ROCKSDB_SHARED_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} ${TORCH_LIBRARIES})
 
   add_library(${ROCKSDB_SHARED_LIB} SHARED ${SOURCES})
   target_link_libraries(${ROCKSDB_SHARED_LIB}
-    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  PUBLIC  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} PRIVATE ${TORCH_LIBRARIES})
   set_target_properties(${ROCKSDB_SHARED_LIB} PROPERTIES
                         LINKER_LANGUAGE CXX
                         VERSION ${rocksdb_VERSION}
@@ -789,7 +797,7 @@ endif()
 
 add_library(${ROCKSDB_STATIC_LIB} STATIC ${SOURCES})
 target_link_libraries(${ROCKSDB_STATIC_LIB}
-  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  PUBLIC ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} PRIVATE ${TORCH_LIBRARIES})
 
 if(WIN32)
   add_library(${ROCKSDB_IMPORT_LIB} SHARED ${SOURCES})
