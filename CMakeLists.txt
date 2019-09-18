@@ -774,7 +774,7 @@ if(WITH_LIBRADOS)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/db/policy_rl)
-set(Torch_DIR /home/wonki/libtorch/share/cmake/Torch)
+set(Torch_DIR ${PROJECT_SOURCE_DIR}/libtorch/share/cmake/Torch)
 find_package(Torch REQUIRED)
 
 if(WIN32)
@@ -867,6 +867,12 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  )
+
+  install(
+    TARGETS "torch_library"
+    EXPORT RocksDBTargets
+    LIBRARY DESTINATION "${CMALE_INSTALL_LIBDIR}"
   )
 
   install(
