@@ -777,7 +777,7 @@ endif()
 #include(${PROJECT_SOURCE_DIR}/libtorch/share/cmake/Caffe2/public/utils.cmake)
 include_directories(${PROJECT_SOURCE_DIR}/db/policy_rl)
 set(Torch_DIR ${PROJECT_SOURCE_DIR}/libtorch/share/cmake/Torch)
-find_package(Torch REQUIRED)
+find_package(Torch CONFIG REQUIRED)
 include_directories(${TORCH_INCLUDE_DIRS})
 
 if(WIN32)
