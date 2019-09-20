@@ -773,13 +773,16 @@ if(WITH_LIBRADOS)
   list(APPEND THIRDPARTY_LIBS rados)
 endif()
 
+#list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/libtorch)
+#include(${PROJECT_SOURCE_DIR}/libtorch/share/cmake/Caffe2/public/utils.cmake)
 include_directories(${PROJECT_SOURCE_DIR}/db/policy_rl)
 set(Torch_DIR ${PROJECT_SOURCE_DIR}/libtorch/share/cmake/Torch)
 find_package(Torch REQUIRED)
+include_directories(${TORCH_INCLUDE_DIRS})
 
 if(WIN32)
   set(SYSTEM_LIBS ${SYSTEM_LIBS} Shlwapi.lib Rpcrt4.lib)
-  set(LIBS ${ROCKSDB_STATIC_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  set(LIBS ${ROCKSDB_STATIC_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} ${TORCH_LIBRARIES})
 else()
   set(SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
   set(LIBS ${ROCKSDB_SHARED_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} ${TORCH_LIBRARIES})
@@ -802,7 +805,7 @@ target_link_libraries(${ROCKSDB_STATIC_LIB}
 if(WIN32)
   add_library(${ROCKSDB_IMPORT_LIB} SHARED ${SOURCES})
   target_link_libraries(${ROCKSDB_IMPORT_LIB}
-    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+   PUBLIC ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} PRIVATE ${TORCH_LIBRARIES})
   set_target_properties(${ROCKSDB_IMPORT_LIB} PROPERTIES
     COMPILE_DEFINITIONS "ROCKSDB_DLL;ROCKSDB_LIBRARY_EXPORTS")
   if(MSVC)
@@ -852,13 +855,13 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   install(DIRECTORY include/rocksdb COMPONENT devel DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
   install(
-    TARGETS ${ROCKSDB_STATIC_LIB}
+    TARGETS ${ROCKSDB_STATIC_LIB} "torch_library"
     EXPORT RocksDBTargets
     COMPONENT devel
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
-
+ 
   install(
     TARGETS ${ROCKSDB_SHARED_LIB}
     EXPORT RocksDBTargets
@@ -870,18 +873,12 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   )
 
   install(
-    TARGETS "torch_library"
-    EXPORT RocksDBTargets
-    LIBRARY DESTINATION "${CMALE_INSTALL_LIBDIR}"
-  )
-
-  install(
-    EXPORT RocksDBTargets
+    EXPORT RocksDBTargets 
     COMPONENT devel
     DESTINATION ${package_config_destination}
     NAMESPACE RocksDB::
   )
-
+  
   install(
     FILES
     ${CMAKE_CURRENT_BINARY_DIR}/RocksDBConfig.cmake
@@ -889,6 +886,7 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
     COMPONENT devel
     DESTINATION ${package_config_destination}
   )
+  
 endif()
 
 option(WITH_TESTS "build with tests" ON)
